@@ -1,14 +1,58 @@
 services:
 
   prometheus:
-    image: prom/prometheus:latest
-
-    # configuration goes here
+    image: prom/prometheus:v3.6.0
+    container_name: prometheus
+    restart: unless-stopped
+    #node exporter is on the host network so the only easy way to scrape it is to
+    #be on the host network too, then its just localhost:9100 and nothing can break
+    network_mode: "host"
+    #this image runs as root by default and it has no reason to, so drop it to nobody
+    user: "65534:65534"
+    volumes:
+      #:ro because this config belongs to git, the container should never rewrite it
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      #named volume not a folder in this repo, so my metrics can never end up in git
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      #two limits and whichever one hits first wins. the size one is the important
+      #one because it means prometheus can never fill up my ssd
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=5GB'
+      #host network ignores the ports: block so the bind address has to go here.
+      #loopback only because my laptop joins wifi i dont trust
+      - '--web.listen-address=127.0.0.1:9090'
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.2.1
+    container_name: grafana
+    restart: unless-stopped
+    #same reason as the other two, and again that means no ports: block
+    network_mode: "host"
+    depends_on: [prometheus]
 
-    # configuration goes here
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:-admin}
+      #the :? makes compose fail straight away if this is missing. i would rather
+      #see a loud error than have grafana quietly boot on admin/admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:?set this in .env}
+
+      #loopback only, same as the other two
+      GF_SERVER_HTTP_ADDR: "127.0.0.1"
+      #its only me using this so nobody else should be able to make an account
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      #dont phone home
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      #config comes from git so read only
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      #grafanas own database, thats state and not config, so named volume.
+      #kept out of /etc so it doesnt nest inside the two mounts above
+      - grafana_data:/var/lib/grafana
 
   node-exporter:
     image: prom/node-exporter:v1.9.1
@@ -21,12 +65,22 @@ services:
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
+      #rslave so a usb drive i plug in later still shows up in the metrics
       - /:/rootfs:ro,rslave
-    #to direct the node exporter to use this commands instead of its own.  
+    #to direct the node exporter to use this commands instead of its own.
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--path.rootfs=/rootfs'
       - '--web.listen-address=127.0.0.1:9100'
+      #every container i start makes a new random veth name and each name becomes a
+      #new series in prometheus forever, so drop them before they ever get stored.
+      #two flags because netdev and netclass are separate collectors
       - '--collector.netdev.device-exclude=^(veth.*|br-.*|docker\d*|lo)$$'
       - '--collector.netclass.ignored-devices=^(veth.*|br-.*|docker\d*|lo)$$'
+
+#this declares the named volumes. the volumes: inside a service only mounts them,
+#docker still needs them listed down here or compose refuses to start
+volumes:
+  prometheus_data:
+  grafana_data:

@@ -1,0 +1,23 @@
+global:
+  #how often it pulls from every target. 15s is fine enough for the graphs to
+  #look smooth but not so often that 30 days of history gets huge
+  scrape_interval: 15s
+
+scrape_configs:
+  #prometheus scraping itself. costs nothing and it makes debugging obvious,
+  #if this one is up but node-exporter is down then i know which one broke
+  - job_name: prometheus
+    static_configs:
+      - targets: ['127.0.0.1:9090']
+
+  - job_name: node-exporter
+    static_configs:
+    #localhost because everything shares the host network namespace, so theres
+    #no bridge or gateway ip or dns name involved that could go wrong
+    - targets: ['127.0.0.1:9100']
+      #overriding the default instance label which would just be 127.0.0.1:9100,
+      #the hostname reads much better on the dashboard panels
+      labels:
+        instance: cachy-os
+
+

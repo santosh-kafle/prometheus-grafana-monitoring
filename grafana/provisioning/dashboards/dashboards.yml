@@ -1,0 +1,15 @@
+apiVersion: 1
+
+#this file is just the instructions telling grafana where my dashboards live.
+#the actual dashboard json sits in grafana/dashboards, confusing naming i know
+providers:
+  - name: laptop
+    #the folder they show up under in the sidebar
+    folder: Laptop
+    type: file
+    #same anti drift reason as the datasource, the json file is the real source
+    allowUiUpdates: false
+    #rescans every 10s so i can edit the json in vs code, save, and just refresh
+    updateIntervalSeconds: 10
+    options:
+      path: /etc/grafana/dashboards
