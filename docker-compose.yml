@@ -1,0 +1,32 @@
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+
+    # configuration goes here
+
+  grafana:
+    image: grafana/grafana:latest
+
+    # configuration goes here
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: node-exporter
+    restart: unless-stopped
+    #need to show and monitor my laptops network not dockers virtual network thats why
+    network_mode: "host"
+    #must show hosts real filesystem so this is to let the container kniw about the hosts file system.
+    #:ro so the container can only read the file system and cannot write to it, incase if a container is compromised our host will be safe.
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro,rslave
+    #to direct the node exporter to use this commands instead of its own.  
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--web.listen-address=127.0.0.1:9100'
+      - '--collector.netdev.device-exclude=^(veth.*|br-.*|docker\d*|lo)$$'
+      - '--collector.netclass.ignored-devices=^(veth.*|br-.*|docker\d*|lo)$$'
