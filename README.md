@@ -30,17 +30,17 @@ graph is a live query.
 
 ## Running it
 
-You need Docker and Docker Compose.
+You need Docker, Docker Compose and `openssl`.
 
 ```bash
 git clone <this repo>
 cd laptop-monitoring
 
-cp .env.example .env       # then edit .env and set a real password
+./scripts/setup.sh         # creates .env with a random Grafana password
 docker compose up -d
 ```
 
-Then open **http://127.0.0.1:3000** and log in with what you put in `.env`.
+Then open **http://127.0.0.1:3000** and log in as `admin` with the password from `.env`.
 The dashboard is already there under **Dashboards → Laptop → Laptop Overview** — nothing to
 import or click, it loads itself from `grafana/dashboards/`.
 
@@ -53,6 +53,23 @@ docker compose down          # stop (metrics are kept)
 docker compose down -v       # stop and delete all collected metrics
 ```
 
+### About the setup script
+
+`scripts/setup.sh` copies `.env.example` to `.env` and fills in the password using
+`openssl rand`. It makes `.env` readable only by you (`600`) and never prints the password.
+
+If `.env` already exists it refuses to run, so it can never overwrite a real password.
+To start over, delete `.env` yourself first.
+
+One catch: Grafana only reads the password from `.env` the **first time** it creates its
+database. After that the password is stored in the `grafana_data` volume, so editing `.env`
+or re-running the script changes nothing. To change it later, either change it in the Grafana
+UI or run:
+
+```bash
+docker exec -it grafana grafana cli admin reset-admin-password <new-password>
+```
+
 ## What's in the repo
 
 ```
@@ -62,6 +79,7 @@ grafana/provisioning/datasources/prometheus.yml connects Grafana to Prometheus
 grafana/provisioning/dashboards/dashboards.yml  tells Grafana where dashboards live
 grafana/dashboards/laptop-overview.json         the dashboard itself
 .env.example                                    which secrets you need to set
+scripts/setup.sh                                creates .env with generated passwords
 docs/images/                                    screenshots for this README
 ```
 
@@ -79,7 +97,8 @@ and refresh the browser — Grafana rescans the folder every 10 seconds.
   (`prometheus_data`, `grafana_data`), which sit in `/var/lib/docker/volumes`. They're outside
   the project folder entirely, so they can't be committed by accident.
 - **The admin password** lives in `.env`, which is gitignored. `.env.example` is committed so
-  you know which variables to set, but never holds a real value.
+  you know which variables to set, but never holds a real value. `scripts/setup.sh`
+  generates the real `.env` locally, so the password is never typed, shared or committed.
 
 ## Why everything uses host networking
 
