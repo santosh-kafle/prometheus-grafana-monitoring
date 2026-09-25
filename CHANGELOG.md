@@ -7,6 +7,11 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Changed
+
+- Setup messages are clearer, and coloured when shown in a terminal. Set `NO_COLOR=1`
+  to turn colours off.
+
 ## [0.1.0] - 2026-09-25
 
 First release. Monitors the Linux machine it's installed on.
