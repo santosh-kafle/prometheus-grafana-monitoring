@@ -7,6 +7,13 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/install.sh`: one command to install. It checks your machine first and lists
+  every problem it finds with how to fix it, asks whether Grafana should be reachable
+  from your home network, creates `.env`, starts the stack and waits until it's really
+  working. Safe to run again, it keeps your `.env` and your data.
+
 ### Changed
 
 - Setup messages are clearer, and coloured when shown in a terminal. Set `NO_COLOR=1`

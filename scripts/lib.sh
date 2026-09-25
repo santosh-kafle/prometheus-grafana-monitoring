@@ -22,6 +22,18 @@ if [ -z "${NO_COLOR:-}" ]; then
   if [ -t 2 ]; then _YELLOW=$'\033[1;33m' _RED=$'\033[1;31m' _RESET_ERR=$'\033[0m'; fi
 fi
 
+# the name: line in docker-compose.yml. read from the file so its only written in one place
+compose_project_name() {
+  sed -n 's/^name: *//p' "$PROJECT_ROOT/docker-compose.yml"
+}
+
+# true if any container of this stack is running. uses the label compose puts on
+# every container instead of `docker compose ps`, because that one needs .env to
+# exist and fails before install has created it
+stack_is_running() {
+  [ -n "$(docker ps -q --filter "label=com.docker.compose.project=$(compose_project_name)")" ]
+}
+
 cd_project_root() {
   cd "$PROJECT_ROOT" || die "couldn't cd to $PROJECT_ROOT"
 }
