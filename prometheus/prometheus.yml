@@ -14,10 +14,9 @@ scrape_configs:
     static_configs:
     #localhost because everything shares the host network namespace, so theres
     #no bridge or gateway ip or dns name involved that could go wrong
+    #no custom instance label here on purpose. this file cant read .env so any
+    #hostname i put here would be wrong on everyone elses machine. the real
+    #hostname is in the nodename label of node_uname_info if a panel needs it
     - targets: ['127.0.0.1:9100']
-      #overriding the default instance label which would just be 127.0.0.1:9100,
-      #the hostname reads much better on the dashboard panels
-      labels:
-        instance: cachy-os
 
 

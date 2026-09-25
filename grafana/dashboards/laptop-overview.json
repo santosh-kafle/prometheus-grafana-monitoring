@@ -399,7 +399,7 @@
       "gridPos": { "h": 8, "w": 6, "x": 6, "y": 63 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "node_power_supply_online{power_supply=\"ACAD\"}", "legendFormat": "AC", "refId": "A" }
+        { "expr": "max(node_power_supply_online * on(instance, power_supply) group_left node_power_supply_info{type=\"Mains\"})", "legendFormat": "AC", "refId": "A" }
       ],
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },

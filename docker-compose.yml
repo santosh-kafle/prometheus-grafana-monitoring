@@ -1,3 +1,8 @@
+#pins the project name. without this compose uses the folder name, so the volumes
+#would be called <folder>_prometheus_data and a clone into a differently named
+#folder would start with empty data. changing this later orphans everyones data
+name: homelab-monitoring
+
 services:
 
   prometheus:
@@ -39,8 +44,12 @@ services:
       #see a loud error than have grafana quietly boot on admin/admin
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:?set this in .env}
 
-      #loopback only, same as the other two
-      GF_SERVER_HTTP_ADDR: "127.0.0.1"
+      #loopback by default like the other two. set GRAFANA_BIND_ADDR=0.0.0.0 in .env
+      #to open it to the home network, eg on a headless server. only grafana ever
+      #gets opened up because its the only one with a login
+      GF_SERVER_HTTP_ADDR: ${GRAFANA_BIND_ADDR:-127.0.0.1}
+      #changeable because 3000 is a really common port for other apps
+      GF_SERVER_HTTP_PORT: ${GRAFANA_PORT:-3000}
       #its only me using this so nobody else should be able to make an account
       GF_USERS_ALLOW_SIGN_UP: "false"
       #dont phone home
@@ -60,6 +69,10 @@ services:
     restart: unless-stopped
     #need to show and monitor my laptops network not dockers virtual network thats why
     network_mode: "host"
+    #on selinux distros (fedora, rhel) selinux blocks containers from reading host
+    #mounts, so the exporter would start but see nothing. on other distros this does nothing
+    security_opt:
+      - label=disable
     #must show hosts real filesystem so this is to let the container kniw about the hosts file system.
     #:ro so the container can only read the file system and cannot write to it, incase if a container is compromised our host will be safe.
     volumes:
@@ -72,6 +85,8 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--path.rootfs=/rootfs'
+      #udev data is on the host too, without this disk model and serial labels are missing
+      - '--path.udev.data=/rootfs/run/udev/data'
       - '--web.listen-address=127.0.0.1:9100'
       #every container i start makes a new random veth name and each name becomes a
       #new series in prometheus forever, so drop them before they ever get stored.
