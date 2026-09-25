@@ -13,6 +13,12 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   every problem it finds with how to fix it, asks whether Grafana should be reachable
   from your home network, creates `.env`, starts the stack and waits until it's really
   working. Safe to run again, it keeps your `.env` and your data.
+- `scripts/update.sh`: updates to the newest release, shows what changed, and checks the
+  stack still works afterwards. `--to <version>` goes to a specific release, which is also
+  how you roll back. Never touches your `.env` or your data.
+- `scripts/uninstall.sh`: removes the containers and keeps your data. `--remove-data`
+  deletes all metrics, Grafana's database and `.env` for good, after you type `delete`
+  to confirm.
 
 ### Changed
 

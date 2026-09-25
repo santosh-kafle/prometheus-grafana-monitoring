@@ -34,6 +34,16 @@ stack_is_running() {
   [ -n "$(docker ps -q --filter "label=com.docker.compose.project=$(compose_project_name)")" ]
 }
 
+# env_value <name> <default> -> the setting from .env, or the default if its not set
+# (or if theres no .env yet)
+env_value() {
+  local value=""
+  if [ -f "$PROJECT_ROOT/.env" ]; then
+    value="$(sed -n "s/^$1=//p" "$PROJECT_ROOT/.env" | tail -n 1)"
+  fi
+  echo "${value:-$2}"
+}
+
 cd_project_root() {
   cd "$PROJECT_ROOT" || die "couldn't cd to $PROJECT_ROOT"
 }
@@ -68,4 +78,55 @@ confirm() {
   fi
   read -r -p "$1 [y/N] " answer || true
   [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]]
+}
+
+# ---------------------------------------------------------------------------
+# health check, used by install.sh and update.sh
+# "the containers started" isnt the same as "it works", so wait until each piece
+# actually answers. bottom up, same order as the troubleshooting in the readme
+# ---------------------------------------------------------------------------
+
+# wait_for <message when ready> <timeout in seconds> <command...>
+wait_for() {
+  local what="$1" timeout="$2" waited=0
+  shift 2
+  until "$@" >/dev/null 2>&1; do
+    if [ "$waited" -ge "$timeout" ]; then
+      return 1
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+  info "$what"
+}
+
+# both prometheus targets have to say up. prometheus only scrapes every 15s, so
+# right after starting this can take a little while
+targets_up() {
+  local targets
+  targets="$(curl -sf 'http://127.0.0.1:9090/api/v1/targets?state=active')" || return 1
+  [ "$(grep -o '"health":"up"' <<<"$targets" | wc -l)" -ge 2 ]
+}
+
+# returns 1 (with a warning saying which piece and how to look into it) instead of
+# dying, so the caller decides what happens next. update.sh prints how to roll back
+check_health() {
+  local port
+  port="$(env_value GRAFANA_PORT 3000)"
+  wait_for "node exporter is collecting metrics" 60 curl -sf http://127.0.0.1:9100/metrics || {
+    warn "node exporter isnt answering. see what went wrong with: docker compose logs node-exporter"
+    return 1
+  }
+  wait_for "prometheus is up" 60 curl -sf http://127.0.0.1:9090/-/ready || {
+    warn "prometheus isnt answering. see what went wrong with: docker compose logs prometheus"
+    return 1
+  }
+  wait_for "prometheus is collecting from node exporter" 60 targets_up || {
+    warn "prometheus is up but isnt collecting. check http://127.0.0.1:9090/targets"
+    return 1
+  }
+  wait_for "grafana is up" 90 curl -sf "http://127.0.0.1:$port/api/health" || {
+    warn "grafana isnt answering. see what went wrong with: docker compose logs grafana"
+    return 1
+  }
 }

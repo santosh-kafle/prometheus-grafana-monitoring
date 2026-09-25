@@ -81,14 +81,52 @@ docker compose up -d         # start again
 The stack starts on its own after a reboot, as long as Docker does. The installer warns
 you if it doesn't.
 
-**Updating and uninstalling:** dedicated scripts are coming in the next release. Until
-then:
+## Update
 
 ```bash
-git pull && docker compose pull && docker compose up -d   # update
-docker compose down                                       # uninstall, keep your data
-docker compose down -v && rm .env                         # uninstall and delete ALL data
+./scripts/update.sh
 ```
+
+It checks GitHub for the newest release, shows you what changed, asks before doing
+anything, then restarts the stack and checks it works. Your `.env` and your data are never
+touched.
+
+If something looks wrong afterwards, go back to the version you had. The script prints
+the exact command when it finishes, e.g.:
+
+```bash
+./scripts/update.sh --to v0.1.0
+```
+
+A few things it will stop and tell you about:
+
+- **You edited one of the project's files.** Updating would overwrite your changes, so it
+  won't. `git diff` shows what you changed, and `git stash` puts it aside.
+- **A new release needs a new setting.** It tells you which one to add to `.env`.
+
+> Installed `v0.1.0`? That version didn't have this script yet. Update once by hand with
+> `git pull && docker compose pull && docker compose up -d`, and use the script after that.
+
+After updating, git says you're on a tag (a "detached HEAD") instead of a branch. That's
+normal: it means you're on an exact release rather than whatever was pushed most recently.
+
+## Uninstall
+
+```bash
+./scripts/uninstall.sh
+```
+
+This removes the containers but **keeps your data and settings**, so
+`./scripts/install.sh` brings everything back exactly as it was.
+
+To delete everything for good (all collected metrics, Grafana's database and your `.env`):
+
+```bash
+./scripts/uninstall.sh --remove-data
+```
+
+It lists exactly what will be deleted and asks you to type `delete` to confirm. It never
+deletes the project folder itself, and tells you how to do that if you want to.
 
 ## Settings
 
@@ -240,6 +278,8 @@ grafana/provisioning/datasources/prometheus.yml connects Grafana to Prometheus
 grafana/provisioning/dashboards/dashboards.yml  tells Grafana where dashboards live
 grafana/dashboards/laptop-overview.json         the dashboard itself
 scripts/install.sh                              the installer
+scripts/update.sh                               updates to a new release, or rolls back
+scripts/uninstall.sh                            removes the stack, optionally with its data
 scripts/setup.sh                                creates .env with a generated password
 scripts/lib.sh                                  shared helpers for the scripts
 .env.example                                    which settings exist

@@ -121,16 +121,6 @@ check_openssl() {
   fi
 }
 
-# env_value <name> <default> -> the setting from .env, or the default if its not set
-# (or if theres no .env yet)
-env_value() {
-  local value=""
-  if [ -f .env ]; then
-    value="$(sed -n "s/^$1=//p" .env | tail -n 1)"
-  fi
-  echo "${value:-$2}"
-}
-
 check_curl() {
   if command -v curl >/dev/null 2>&1; then
     info "curl is installed"
@@ -288,42 +278,7 @@ docker compose pull
 info "starting the stack"
 docker compose up -d
 
-# ---------------------------------------------------------------------------
-# health check
-# "the containers started" isnt the same as "it works", so wait until each piece
-# actually answers. bottom up, same order as the troubleshooting in the readme
-# ---------------------------------------------------------------------------
-
-# wait_for <message when ready> <timeout in seconds> <command...>
-wait_for() {
-  local what="$1" timeout="$2" waited=0
-  shift 2
-  until "$@" >/dev/null 2>&1; do
-    if [ "$waited" -ge "$timeout" ]; then
-      return 1
-    fi
-    sleep 2
-    waited=$((waited + 2))
-  done
-  info "$what"
-}
-
-# both prometheus targets have to say up. prometheus only scrapes every 15s, so
-# right after starting this can take a little while
-targets_up() {
-  local targets
-  targets="$(curl -sf 'http://127.0.0.1:9090/api/v1/targets?state=active')" || return 1
-  [ "$(grep -o '"health":"up"' <<<"$targets" | wc -l)" -ge 2 ]
-}
-
-wait_for "node exporter is collecting metrics" 60 curl -sf http://127.0.0.1:9100/metrics ||
-  die "node exporter didnt start. see what went wrong with: docker compose logs node-exporter"
-wait_for "prometheus is up" 60 curl -sf http://127.0.0.1:9090/-/ready ||
-  die "prometheus didnt start. see what went wrong with: docker compose logs prometheus"
-wait_for "prometheus is collecting from node exporter" 60 targets_up ||
-  die "prometheus started but isnt collecting. check http://127.0.0.1:9090/targets"
-wait_for "grafana is up" 90 curl -sf "http://127.0.0.1:$port/api/health" ||
-  die "grafana didnt start. see what went wrong with: docker compose logs grafana"
+check_health || die "the stack didnt come up properly, see above"
 
 # ---------------------------------------------------------------------------
 # done
