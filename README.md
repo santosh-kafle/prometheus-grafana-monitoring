@@ -261,8 +261,10 @@ every service has an explicit listen address.
 
 ### Other decisions
 
-- **Image versions are pinned** (`v1.9.1`, `v3.6.0`, `13.2.1`) instead of `:latest`, so
-  a clone next year gets the same software and the dashboard still works.
+- **Image versions are pinned** in `docker-compose.yml` instead of using `:latest`, so a
+  clone next year gets the same software and the dashboard still works. Dependabot opens
+  a pull request when a new version comes out, CI tests it, and it reaches you with the
+  next release.
 - **Virtual network interfaces are ignored** (`veth*`, `br-*`, `docker*`). Every container
   you start creates one with a random name, and each name would become a permanent new
   entry in Prometheus.

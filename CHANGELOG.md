@@ -18,6 +18,10 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   version, and the checks above test it before it's merged.
 - CI status badge in the README.
 
+### Changed
+
+- Updated Prometheus to 3.15.0, Node Exporter to 1.12.1 and Grafana to 13.2.2.
+
 ## [0.2.0] - 2026-09-25
 
 ### Added
