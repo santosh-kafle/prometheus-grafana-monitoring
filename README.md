@@ -1,5 +1,8 @@
 # Homelab Monitoring
 
+[![CI](https://github.com/santosh-kafle/prometheus-grafana-monitoring/actions/workflows/ci.yml/badge.svg)](https://github.com/santosh-kafle/prometheus-grafana-monitoring/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 See what your Linux machine is doing: CPU, memory, disks, network, temperatures and
 battery, on a ready-made dashboard. Built with Prometheus and Grafana, the same tools used
 to monitor production servers, and set up so a beginner can install it with one command
@@ -285,6 +288,8 @@ scripts/lib.sh                                  shared helpers for the scripts
 .env.example                                    which settings exist
 docs/images/                                    screenshots for this README
 CHANGELOG.md                                    what changed in each release
+.github/workflows/ci.yml                        automatic checks on every push and pull request
+.github/dependabot.yml                          opens pull requests for new image versions
 ```
 
 ## License

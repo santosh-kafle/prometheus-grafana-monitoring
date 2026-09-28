@@ -1,0 +1,18 @@
+# dependabot checks for new versions and opens a pull request for each one.
+# ci then runs the full install test on that pull request, so a new version is
+# only merged once it's proven to work
+version: 2
+updates:
+  # the pinned images in docker-compose.yml (grafana, prometheus, node-exporter).
+  # one pull request per image, so if one update breaks something the others
+  # can still be merged
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+
+  # the actions used in .github/workflows, eg actions/checkout
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

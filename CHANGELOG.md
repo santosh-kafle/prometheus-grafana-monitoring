@@ -7,11 +7,16 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-28
+
 ### Added
 
 - Automatic checks on every push and pull request (GitHub Actions). They lint the
   scripts and config files, then do a full install, uninstall with `--remove-data`,
   and check that nothing was left behind.
+- Dependabot opens a pull request when Grafana, Prometheus or Node Exporter has a new
+  version, and the checks above test it before it's merged.
+- CI status badge in the README.
 
 ## [0.2.0] - 2026-09-25
 
@@ -54,6 +59,7 @@ First release. Monitors the Linux machine it's installed on.
 - The power source panel works on any laptop, whatever the charger is called.
 - Disk model and serial number labels from the host's udev data.
 
-[Unreleased]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/releases/tag/v0.1.0
