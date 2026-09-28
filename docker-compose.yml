@@ -64,7 +64,7 @@ services:
       - grafana_data:/var/lib/grafana
 
   node-exporter:
-    image: prom/node-exporter:v1.9.1
+    image: prom/node-exporter:v1.12.1
     container_name: node-exporter
     restart: unless-stopped
     #need to show and monitor my laptops network not dockers virtual network thats why
