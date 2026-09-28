@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# the jobs only read the repo, they never push or publish anything
+permissions:
+  contents: read
+
+jobs:
+  # fast checks, no containers started. catches typos in seconds instead of after
+  # a full install
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # -x follows the `source lib.sh` lines so functions from lib.sh are known.
+      # -P SCRIPTDIR looks for lib.sh next to each script instead of in the folder
+      # shellcheck was started from (the repo root here)
+      - name: shellcheck
+        run: shellcheck -x -P SCRIPTDIR scripts/*.sh
+
+      # the compose file requires the password (:?) and ci has no .env. the value
+      # is fake and never used for anything, so it's fine in a public file
+      - name: compose file is valid
+        env:
+          GF_SECURITY_ADMIN_PASSWORD: unused
+        run: docker compose config --quiet
+
+      # promtool ships inside the prometheus image. the version is read from
+      # docker-compose.yml so the check always uses the same prometheus we run
+      - name: prometheus config is valid
+        run: |
+          image="$(sed -n 's/^ *image: *\(prom\/prometheus:.*\)/\1/p' docker-compose.yml)"
+          docker run --rm \
+            -v "$PWD/prometheus:/etc/prometheus:ro" \
+            --entrypoint promtool \
+            "$image" check config /etc/prometheus/prometheus.yml
+
+      # jq empty prints nothing and only fails if the json is broken
+      - name: dashboards are valid json
+        run: |
+          for f in grafana/dashboards/*.json; do
+            jq empty "$f"
+          done
+
+  # the real thing: install, check it works, uninstall, check nothing is left.
+  # only runs if lint passed, no point spending minutes on an install that has a typo
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # --yes: no questions, defaults only. install.sh runs the health check itself,
+      # so if this step passes the stack really works
+      - name: install
+        run: ./scripts/install.sh --yes
+
+      - name: uninstall with --remove-data
+        run: ./scripts/uninstall.sh --remove-data --yes
+
+      # ! flips the result: grep finding a leftover volume makes the step fail
+      - name: no volumes left behind
+        run: "! docker volume ls -q | grep homelab-monitoring"
+
+      # only when something above failed. the dummy password lets compose read the
+      # file even if install died before creating .env
+      - name: dump logs
+        if: failure()
+        env:
+          GF_SECURITY_ADMIN_PASSWORD: unused
+        run: docker compose logs

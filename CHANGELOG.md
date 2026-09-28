@@ -7,6 +7,12 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+
+- Automatic checks on every push and pull request (GitHub Actions). They lint the
+  scripts and config files, then do a full install, uninstall with `--remove-data`,
+  and check that nothing was left behind.
+
 ## [0.2.0] - 2026-09-25
 
 ### Added
