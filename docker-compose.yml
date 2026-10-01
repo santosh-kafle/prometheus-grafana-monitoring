@@ -17,6 +17,7 @@ services:
     volumes:
       #:ro because this config belongs to git, the container should never rewrite it
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       #named volume not a folder in this repo, so my metrics can never end up in git
       - prometheus_data:/prometheus
     command:

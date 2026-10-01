@@ -3,6 +3,9 @@ global:
   #look smooth but not so often that 30 days of history gets huge
   scrape_interval: 15s
 
+rule_files:
+  - /etc/prometheus/alerts.yml
+
 scrape_configs:
   #prometheus scraping itself. costs nothing and it makes debugging obvious,
   #if this one is up but node-exporter is down then i know which one broke

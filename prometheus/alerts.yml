@@ -1,0 +1,101 @@
+groups:
+  - name: machine
+    rules:
+      # if node exporter is down every other rule sees no data and stays quiet
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Node Exporter is down
+          description: "No metrics for 2 minutes, all other alerts are blind until it's back."
+
+      - alert: HighCpuUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: CPU usage is high
+          description: "CPU has been above 90% for 15 minutes, now at {{ $value | humanize }}%."
+
+      # MemAvailable counts cache linux can free, so this is real usage
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Memory usage is high
+          description: "Memory has been above 90% for 15 minutes, now at {{ $value | humanize }}%."
+
+      # share of time processes were stuck waiting for memory (psi), 0.1 = 10%
+      - alert: MemoryPressureHigh
+        expr: rate(node_pressure_memory_waiting_seconds_total[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The system is stalling on memory
+          description: "Processes spent {{ $value | humanizePercentage }} of the time waiting for memory."
+
+      # by (device): btrfs subvolumes are separate mountpoints of one disk.
+      # squashfs (snaps) is always 100% full, tmpfs/ramfs/overlay arent real disks
+      - alert: DiskAlmostFull
+        expr: |
+          min by (device) (
+            node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs"}
+          ) * 100 < 10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Disk almost full
+          description: "Only {{ $value | humanize }}% free on {{ $labels.device }}."
+
+      # trend of the last 6h says full within 24h, and its already under 20% free
+      - alert: DiskWillFillIn24h
+        expr: |
+          (
+            min by (device) (
+              predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs"}[6h], 24 * 3600)
+            ) < 0
+          )
+          and
+          (
+            min by (device) (
+              node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs"}
+              / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs"}
+            ) * 100 < 20
+          )
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: Disk will be full within 24 hours
+          description: "At the current rate {{ $labels.device }} runs out of space within a day."
+
+      # within 10°C of the chip's own critical limit, so it fits any hardware
+      - alert: HighTemperature
+        expr: max by (chip) (node_hwmon_temp_celsius >= node_hwmon_temp_crit_celsius - 10)
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Hardware is overheating
+          description: "{{ $labels.chip }} is at {{ $value | humanize }}°C, close to its critical limit."
+
+      # status is a label on the info metric, so match the two on the battery
+      - alert: BatteryLow
+        expr: |
+          node_power_supply_capacity < 15
+          and on(instance, power_supply)
+          node_power_supply_info{status="Discharging"}
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Battery is low
+          description: "{{ $labels.power_supply }} is at {{ $value }}% and not charging."
