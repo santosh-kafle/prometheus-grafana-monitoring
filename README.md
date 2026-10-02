@@ -279,6 +279,7 @@ every service has an explicit listen address.
 ```
 docker-compose.yml                              the three services
 prometheus/prometheus.yml                       what to collect and how often
+prometheus/alerts.yml                           when something counts as a problem
 grafana/provisioning/datasources/prometheus.yml connects Grafana to Prometheus
 grafana/provisioning/dashboards/dashboards.yml  tells Grafana where dashboards live
 grafana/dashboards/laptop-overview.json         the dashboard itself
