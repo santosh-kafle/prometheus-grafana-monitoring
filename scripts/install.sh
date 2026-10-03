@@ -146,7 +146,7 @@ check_ports() {
   # the grafana port can be changed in .env, so check that one and not always 3000
   local gport entry name port busy=0
   gport="$(env_value GRAFANA_PORT 3000)"
-  for entry in "prometheus:9090" "node-exporter:9100" "grafana:$gport"; do
+  for entry in "prometheus:9090" "node-exporter:9100" "alertmanager:9093" "grafana:$gport"; do
     name="${entry%%:*}"
     port="${entry##*:}"
     if [ -n "$(ss -Hltn "sport = :$port")" ]; then
@@ -162,7 +162,7 @@ check_ports() {
     fi
   done
   if [ "$busy" -eq 0 ]; then
-    info "ports 9090, 9100 and $gport are free"
+    info "ports 9090, 9100, 9093 and $gport are free"
   fi
 }
 

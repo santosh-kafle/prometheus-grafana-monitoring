@@ -125,6 +125,10 @@ check_health() {
     warn "prometheus is up but isnt collecting. check http://127.0.0.1:9090/targets"
     return 1
   }
+  wait_for "alertmanager is up" 60 curl -sf http://127.0.0.1:9093/-/ready || {
+    warn "alertmanager isnt answering. see what went wrong with: docker compose logs alertmanager"
+    return 1
+  }
   wait_for "grafana is up" 90 curl -sf "http://127.0.0.1:$port/api/health" || {
     warn "grafana isnt answering. see what went wrong with: docker compose logs grafana"
     return 1

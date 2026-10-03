@@ -40,6 +40,14 @@ jobs:
             --entrypoint promtool \
             "$image" check config /etc/prometheus/prometheus.yml
 
+      - name: alertmanager config is valid
+        run: |
+          image="$(sed -n 's/^ *image: *\(prom\/alertmanager:.*\)/\1/p' docker-compose.yml)"
+          docker run --rm \
+            -v "$PWD/alertmanager:/etc/alertmanager:ro" \
+            --entrypoint amtool \
+            "$image" check-config /etc/alertmanager/alertmanager.yml
+
       # jq empty prints nothing and only fails if the json is broken
       - name: dashboards are valid json
         run: |

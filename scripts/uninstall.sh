@@ -39,7 +39,7 @@ done
 require_cmd docker
 
 project="$(compose_project_name)"
-volumes=("${project}_prometheus_data" "${project}_grafana_data")
+volumes=("${project}_prometheus_data" "${project}_grafana_data" "${project}_alertmanager_data")
 
 # compose reads docker-compose.yml even just to stop things, and that file says the
 # password is required (:?). if .env is already gone that would fail before doing

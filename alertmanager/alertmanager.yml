@@ -1,0 +1,15 @@
+route:
+  receiver: default
+  #one message per alert type, eg both disks in one DiskAlmostFull message
+  group_by: ['alertname']
+  #wait a bit after the first alert in case related ones arrive with it
+  group_wait: 30s
+  #how long before sending an update when a new alert joins a group
+  group_interval: 5m
+  #reminder if its still firing. more often than this is just nagging on a laptop
+  repeat_interval: 6h
+
+receivers:
+  #no destination yet, alerts only show up in alertmanager's own page on :9093.
+  #a notification channel (telegram, ntfy...) gets added here later
+  - name: default

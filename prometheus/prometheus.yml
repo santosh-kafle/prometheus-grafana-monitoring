@@ -6,6 +6,12 @@ global:
 rule_files:
   - /etc/prometheus/alerts.yml
 
+#rule_files says what to check, this says who to tell when a rule fires
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['127.0.0.1:9093']
+
 scrape_configs:
   #prometheus scraping itself. costs nothing and it makes debugging obvious,
   #if this one is up but node-exporter is down then i know which one broke

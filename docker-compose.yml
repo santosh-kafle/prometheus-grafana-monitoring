@@ -31,6 +31,25 @@ services:
       #loopback only because my laptop joins wifi i dont trust
       - '--web.listen-address=127.0.0.1:9090'
 
+  alertmanager:
+    image: prom/alertmanager:v0.34.1
+    container_name: alertmanager
+    restart: unless-stopped
+    #host network like the rest, prometheus reaches it on plain localhost:9093
+    network_mode: "host"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      #silences and what was already sent, so a restart doesnt forget them
+      - alertmanager_data:/alertmanager
+    #command replaces the image's default flags, so config and storage are repeated
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.listen-address=127.0.0.1:9093'
+      #empty turns clustering off. the default is 0.0.0.0:9094, which with host
+      #networking would open a port on every network the laptop joins
+      - '--cluster.listen-address='
+
   grafana:
     image: grafana/grafana:13.2.2
     container_name: grafana
@@ -100,3 +119,4 @@ services:
 volumes:
   prometheus_data:
   grafana_data:
+  alertmanager_data:

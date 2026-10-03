@@ -30,7 +30,7 @@ Further down the same dashboard: network, battery, temperatures and resource pre
 - **Docker Engine** with the **Compose plugin** (`docker compose`, not the old `docker-compose`).
   Your user needs to be able to run `docker` without `sudo`.
 - **git**, **openssl** and **curl**. Most distros already have them.
-- Ports **9090**, **9100** and **3000** free. Grafana's port can be changed.
+- Ports **9090**, **9100**, **9093** and **3000** free. Grafana's port can be changed.
 
 **Not supported:** macOS and Windows (Docker runs inside a VM there, so you'd be
 monitoring the VM), rootless Docker, and Podman.
@@ -277,9 +277,10 @@ every service has an explicit listen address.
 ## What's in the repo
 
 ```
-docker-compose.yml                              the three services
+docker-compose.yml                              the services
 prometheus/prometheus.yml                       what to collect and how often
 prometheus/alerts.yml                           when something counts as a problem
+alertmanager/alertmanager.yml                   how alerts are grouped and sent
 grafana/provisioning/datasources/prometheus.yml connects Grafana to Prometheus
 grafana/provisioning/dashboards/dashboards.yml  tells Grafana where dashboards live
 grafana/dashboards/laptop-overview.json         the dashboard itself
