@@ -17,6 +17,8 @@ Further down the same dashboard: network, battery, temperatures and resource pre
 ## What you get
 
 - A dashboard that's there as soon as you log in. Nothing to import or click through.
+- CPU, memory, network and disk use **per Docker container**, so you can see which one
+  of your lab containers is eating the machine.
 - 30 days of history, capped at 5 GB so it can never fill your disk.
 - Private by default: nothing is reachable from other devices unless you choose that
   during install.
@@ -30,7 +32,7 @@ Further down the same dashboard: network, battery, temperatures and resource pre
 - **Docker Engine** with the **Compose plugin** (`docker compose`, not the old `docker-compose`).
   Your user needs to be able to run `docker` without `sudo`.
 - **git**, **openssl** and **curl**. Most distros already have them.
-- Ports **9090**, **9100**, **9093** and **3000** free. Grafana's port can be changed.
+- Ports **9090**, **9100**, **9093**, **9338** and **3000** free. Grafana's port can be changed.
 
 **Not supported:** macOS and Windows (Docker runs inside a VM there, so you'd be
 monitoring the VM), rootless Docker, and Podman.
@@ -176,6 +178,7 @@ Probably not. Some panels only have data on some hardware:
 | Temperatures, sensors | Virtual machines, and some boards that don't expose sensors |
 | CPU frequency | Virtual machines |
 | Pressure | Older kernels (before 4.20), or kernels built without PSI |
+| Container network | Shows the whole machine's traffic for containers on the host network, like this stack's own |
 
 If *everything* is empty, check each piece from the bottom up. Whichever step fails first
 is the broken one:
@@ -196,15 +199,18 @@ docker inspect node-exporter --format '{{range .Config.Cmd}}{{println .}}{{end}}
 
 ## How it works
 
-Monitoring is split into three jobs, and each one has its own tool:
+Monitoring is split into separate jobs, and each one has its own tool:
 
 | Tool | What it does | Port |
 | --- | --- | --- |
 | **Node Exporter** | Reads the kernel's stats from `/proc` and `/sys` and serves them as a web page | 9100 |
+| **cAdvisor** | Does the same per container, from the kernel's cgroups (the mechanism Docker uses to limit containers) | 9338 |
 | **Prometheus** | Fetches that page every 15 seconds and keeps the history in a database | 9090 |
+| **Alertmanager** | Receives alerts from Prometheus, groups them and decides who to tell | 9093 |
 | **Grafana** | Asks Prometheus for numbers and draws the graphs | 3000 |
 
-The flow is **Node Exporter → Prometheus → Grafana**.
+The flow is **Node Exporter and cAdvisor → Prometheus → Grafana**, with Prometheus also
+handing alerts to Alertmanager.
 
 Node Exporter has no memory. Ask it for stats and it tells you what's true right now, and
 nothing else. Prometheus is what turns that into history. Grafana stores no metrics at all;
@@ -273,6 +279,14 @@ every service has an explicit listen address.
   not found".
 - **Node Exporter can only read the host, never write to it.** Every host folder is
   mounted read-only (`:ro`).
+- **cAdvisor sees more than Node Exporter.** To name each container it reads Docker's
+  socket and `/var/lib/docker`, so it can see every container's details. It's all
+  read-only, it only listens on `127.0.0.1`, and it isn't run as `privileged`. The one
+  extra permission is reading the kernel log (`SYSLOG`), the only place the kernel
+  announces that it killed a container for running out of memory.
+- **cAdvisor is trimmed down.** By default it exports about 1000 series for a dozen
+  containers. It only collects containers (`--docker_only`), and Prometheus keeps just the
+  metrics the dashboard and alerts use, about 120.
 
 ## What's in the repo
 

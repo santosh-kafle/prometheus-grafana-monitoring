@@ -12,6 +12,10 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Alert rules for Node Exporter being down, high CPU, high memory, memory pressure, a disk
   that's almost full or will be full within a day, overheating and a low battery. For now
   they're shown in Prometheus at `http://127.0.0.1:9090/alerts`; notifications come later.
+- Alertmanager, which receives alerts from Prometheus and groups them.
+- Container monitoring with cAdvisor: CPU, memory, network and disk per container, in a
+  new "Containers" row at the top of the dashboard, plus alerts for a container that keeps
+  restarting or runs out of memory.
 
 ## [0.3.0] - 2026-09-28
 

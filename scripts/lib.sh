@@ -100,12 +100,12 @@ wait_for() {
   info "$what"
 }
 
-# both prometheus targets have to say up. prometheus only scrapes every 15s, so
-# right after starting this can take a little while
+# all prometheus targets (itself, node exporter, cadvisor) have to say up. prometheus
+# only scrapes every 15s, so right after starting this can take a little while
 targets_up() {
   local targets
   targets="$(curl -sf 'http://127.0.0.1:9090/api/v1/targets?state=active')" || return 1
-  [ "$(grep -o '"health":"up"' <<<"$targets" | wc -l)" -ge 2 ]
+  [ "$(grep -o '"health":"up"' <<<"$targets" | wc -l)" -ge 3 ]
 }
 
 # returns 1 (with a warning saying which piece and how to look into it) instead of
@@ -121,7 +121,11 @@ check_health() {
     warn "prometheus isnt answering. see what went wrong with: docker compose logs prometheus"
     return 1
   }
-  wait_for "prometheus is collecting from node exporter" 60 targets_up || {
+  wait_for "cadvisor is collecting container metrics" 60 curl -sf http://127.0.0.1:9338/healthz || {
+    warn "cadvisor isnt answering. see what went wrong with: docker compose logs cadvisor"
+    return 1
+  }
+  wait_for "prometheus is collecting from node exporter and cadvisor" 60 targets_up || {
     warn "prometheus is up but isnt collecting. check http://127.0.0.1:9090/targets"
     return 1
   }

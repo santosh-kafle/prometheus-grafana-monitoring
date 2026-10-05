@@ -127,14 +127,95 @@
       }
     },
 
-    { "type": "row", "title": "CPU", "collapsed": false, "panels": [],
+    { "type": "row", "title": "Containers", "collapsed": false, "panels": [],
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 } },
+
+    {
+      "type": "timeseries",
+      "title": "Container CPU",
+      "description": "cpu per container from cadvisor. 100% is one full core, so a busy container on a multi-core machine can go above 100",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[5m])) * 100", "legendFormat": "{{name}}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0,
+          "custom": { "fillOpacity": 15, "lineWidth": 1, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Container memory",
+      "description": "working set: the memory the container is really using, not counting cache the kernel can take back. it's what docker's memory limit and the oom killer look at",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (name) (container_memory_working_set_bytes{name!=\"\"})", "legendFormat": "{{name}}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes", "min": 0,
+          "custom": { "fillOpacity": 15, "lineWidth": 1, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Container network",
+      "description": "traffic per container. containers on the host network (like this stack) see the whole machine's traffic, so theirs is the same as the network row below",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (name) (rate(container_network_receive_bytes_total{name!=\"\"}[5m]))", "legendFormat": "{{name}} rx", "refId": "A" },
+        { "expr": "sum by (name) (rate(container_network_transmit_bytes_total{name!=\"\"}[5m]))", "legendFormat": "{{name}} tx", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps", "min": 0,
+          "custom": { "fillOpacity": 15, "lineWidth": 1, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Container disk I/O",
+      "description": "how much each container reads from and writes to disk",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (name) (rate(container_fs_reads_bytes_total{name!=\"\"}[5m]))", "legendFormat": "{{name}} read", "refId": "A" },
+        { "expr": "sum by (name) (rate(container_fs_writes_bytes_total{name!=\"\"}[5m]))", "legendFormat": "{{name}} write", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps", "min": 0,
+          "custom": { "fillOpacity": 15, "lineWidth": 1, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+
+    { "type": "row", "title": "CPU", "collapsed": false, "panels": [],
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 } },
 
     {
       "type": "timeseries",
       "title": "CPU by mode",
       "description": "where the cpu time actually goes. stacked so the total is how busy it is overall",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "avg by (mode) (rate(node_cpu_seconds_total{mode!=\"idle\"}[5m])) * 100", "legendFormat": "{{mode}}", "refId": "A" }
@@ -153,7 +234,7 @@
       "type": "timeseries",
       "title": "Per-core busy",
       "description": "one line per core. an average hides it when just one core is pegged, this doesnt",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "100 - (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]) * 100)", "legendFormat": "core {{cpu}}", "refId": "A" }
@@ -170,7 +251,7 @@
     {
       "type": "timeseries",
       "title": "CPU frequency",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 14 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 31 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "node_cpu_scaling_frequency_hertz", "legendFormat": "core {{cpu}}", "refId": "A" }
@@ -185,7 +266,7 @@
       "type": "timeseries",
       "title": "Load average",
       "description": "runnable plus uninterruptible processes. compare it against my 16 cores",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 14 },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 31 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "node_load1", "legendFormat": "1m", "refId": "A" },
@@ -200,13 +281,13 @@
     },
 
     { "type": "row", "title": "Memory", "collapsed": false, "panels": [],
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 } },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 38 } },
 
     {
       "type": "timeseries",
       "title": "Memory breakdown",
       "description": "cache and buffers can be reclaimed so a big cache is normal linux, not a problem",
-      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 22 },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 39 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes", "legendFormat": "used", "refId": "A" },
@@ -227,7 +308,7 @@
     {
       "type": "timeseries",
       "title": "Swap",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 22 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 39 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes", "legendFormat": "used", "refId": "A" },
@@ -241,12 +322,12 @@
     },
 
     { "type": "row", "title": "Disk", "collapsed": false, "panels": [],
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 } },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 47 } },
 
     {
       "type": "timeseries",
       "title": "Disk throughput",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 31 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 48 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "rate(node_disk_read_bytes_total[5m])", "legendFormat": "{{device}} read", "refId": "A" },
@@ -261,7 +342,7 @@
     {
       "type": "timeseries",
       "title": "Disk IOPS",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 31 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 48 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "rate(node_disk_reads_completed_total[5m])", "legendFormat": "{{device}} reads", "refId": "A" },
@@ -277,7 +358,7 @@
       "type": "timeseries",
       "title": "Disk utilisation",
       "description": "how much of the time the disk had at least one request in flight. stuck at 100 means the disk is what is slowing me down",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 31 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 48 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "rate(node_disk_io_time_seconds_total[5m]) * 100", "legendFormat": "{{device}}", "refId": "A" }
@@ -292,7 +373,7 @@
       "type": "timeseries",
       "title": "Filesystem used",
       "description": "max by (device) collapses the btrfs subvolumes, otherwise my one ssd shows up seven times",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 39 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 56 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "100 * (1 - max by (device) (node_filesystem_avail_bytes{fstype!~\"tmpfs|ramfs\"}) / max by (device) (node_filesystem_size_bytes{fstype!~\"tmpfs|ramfs\"}))", "legendFormat": "{{device}}", "refId": "A" }
@@ -312,7 +393,7 @@
     {
       "type": "timeseries",
       "title": "Filesystem free space",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 39 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 56 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "max by (device) (node_filesystem_avail_bytes{fstype!~\"tmpfs|ramfs\"})", "legendFormat": "{{device}}", "refId": "A" }
@@ -325,12 +406,12 @@
     },
 
     { "type": "row", "title": "Network", "collapsed": false, "panels": [],
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 47 } },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 64 } },
 
     {
       "type": "timeseries",
       "title": "Network throughput",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 48 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 65 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "rate(node_network_receive_bytes_total[5m])", "legendFormat": "{{device}} rx", "refId": "A" },
@@ -345,7 +426,7 @@
     {
       "type": "timeseries",
       "title": "Network packets",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 48 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 65 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "rate(node_network_receive_packets_total[5m])", "legendFormat": "{{device}} rx", "refId": "A" },
@@ -361,7 +442,7 @@
       "type": "timeseries",
       "title": "Network errors and drops",
       "description": "should just sit flat on zero. if it starts climbing theres something actually wrong with the link",
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 56 },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 73 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "rate(node_network_receive_errs_total[5m])", "legendFormat": "{{device}} rx errs", "refId": "A" },
@@ -377,12 +458,12 @@
     },
 
     { "type": "row", "title": "Hardware", "collapsed": false, "panels": [],
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 62 } },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 79 } },
 
     {
       "type": "timeseries",
       "title": "Battery charge",
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 63 },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 80 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "node_power_supply_capacity{power_supply=~\"BAT.*\"}", "legendFormat": "{{power_supply}}", "refId": "A" }
@@ -396,7 +477,7 @@
     {
       "type": "stat",
       "title": "Power source",
-      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 63 },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 80 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "max(node_power_supply_online * on(instance, power_supply) group_left node_power_supply_info{type=\"Mains\"})", "legendFormat": "AC", "refId": "A" }
@@ -420,7 +501,7 @@
     {
       "type": "timeseries",
       "title": "Thermal zones",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 63 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 80 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "node_thermal_zone_temp", "legendFormat": "{{type}}", "refId": "A" }
@@ -441,7 +522,7 @@
       "type": "timeseries",
       "title": "Hardware sensors (hwmon)",
       "description": "cpu package, nvme and chipset sensors, read straight out of /sys/class/hwmon",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 71 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 88 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "node_hwmon_temp_celsius", "legendFormat": "{{chip}} / {{sensor}}", "refId": "A" }
@@ -460,13 +541,13 @@
     },
 
     { "type": "row", "title": "Pressure (PSI)", "collapsed": false, "panels": [],
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 79 } },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 96 } },
 
     {
       "type": "timeseries",
       "title": "Resource pressure",
       "description": "how long things were stalled waiting on a resource. not the same as utilisation, a disk can sit at 100% with no pressure at all if only one process wants it",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 80 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 97 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "rate(node_pressure_cpu_waiting_seconds_total[5m]) * 100", "legendFormat": "cpu", "refId": "A" },

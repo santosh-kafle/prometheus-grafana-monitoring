@@ -114,6 +114,47 @@ services:
       - '--collector.netdev.device-exclude=^(veth.*|br-.*|docker\d*|lo)$$'
       - '--collector.netclass.ignored-devices=^(veth.*|br-.*|docker\d*|lo)$$'
 
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.6
+    container_name: cadvisor
+    restart: unless-stopped
+    #host network like the rest, prometheus scrapes it on localhost
+    network_mode: "host"
+    security_opt:
+      - label=disable
+    #it reads each container's cgroup in /sys and asks docker for names and images.
+    #everything :ro, it only ever looks
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    #oom kills are only announced in the kernel log, so cadvisor needs to read it.
+    #syslog is the one extra permission for that, instead of running privileged
+    devices:
+      - /dev/kmsg
+    cap_add:
+      - SYSLOG
+    command:
+      #9338 instead of the default 8080, which lots of other apps already use
+      - '--listen_ip=127.0.0.1'
+      - '--port=9338'
+      #only docker containers, not every systemd service on the machine
+      - '--docker_only'
+      #default is every second, which costs cpu for no benefit when prometheus
+      #only scrapes every 15s
+      - '--housekeeping_interval=15s'
+      - '--enable_metrics=cpu,memory,network,diskIO,oom_event'
+      #by default every docker label becomes a prometheus label, which explodes
+      #the number of series. keep only the compose project and service
+      - '--store_container_labels=false'
+      - '--whitelisted_container_labels=com.docker.compose.project,com.docker.compose.service'
+    #the image's own healthcheck asks localhost, which can be ipv6 (::1), but this only
+    #listens on 127.0.0.1 so docker would call it unhealthy while it works fine
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:9338/healthz']
+
 #this declares the named volumes. the volumes: inside a service only mounts them,
 #docker still needs them listed down here or compose refuses to start
 volumes:

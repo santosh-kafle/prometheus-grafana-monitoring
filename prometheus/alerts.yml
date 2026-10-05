@@ -99,3 +99,22 @@ groups:
         annotations:
           summary: Battery is low
           description: "{{ $labels.power_supply }} is at {{ $value }}% and not charging."
+
+  - name: containers
+    rules:
+      # docker restarted it at least twice in 15 minutes, so its crashing in a loop
+      - alert: ContainerRestarting
+        expr: changes(container_start_time_seconds{name!=""}[15m]) >= 2
+        labels:
+          severity: warning
+        annotations:
+          summary: A container keeps restarting
+          description: "{{ $labels.name }} restarted {{ $value }} times in the last 15 minutes."
+
+      - alert: ContainerOomKilled
+        expr: increase(container_oom_events_total{name!=""}[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: A container ran out of memory
+          description: "{{ $labels.name }} was killed for using more memory than it's allowed."
