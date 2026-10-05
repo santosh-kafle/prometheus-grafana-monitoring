@@ -51,7 +51,7 @@ services:
       - '--cluster.listen-address='
 
   grafana:
-    image: grafana/grafana:13.2.2
+    image: grafana/grafana:13.2.3
     container_name: grafana
     restart: unless-stopped
     #same reason as the other two, and again that means no ports: block
