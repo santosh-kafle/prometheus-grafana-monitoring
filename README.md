@@ -1,6 +1,6 @@
 # Homelab Monitoring
 
-[![CI](https://github.com/santosh-kafle/prometheus-grafana-monitoring/actions/workflows/ci.yml/badge.svg)](https://github.com/santosh-kafle/prometheus-grafana-monitoring/actions/workflows/ci.yml)
+[![CI](https://github.com/santosh-kafle/homelab-monitoring/actions/workflows/ci.yml/badge.svg)](https://github.com/santosh-kafle/homelab-monitoring/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 See what your Linux machine is doing: CPU, memory, disks, network, temperatures and
@@ -42,8 +42,8 @@ Don't worry about checking all of this yourself. The installer checks it for you
 ## Install
 
 ```bash
-git clone https://github.com/santosh-kafle/prometheus-grafana-monitoring.git
-cd prometheus-grafana-monitoring
+git clone https://github.com/santosh-kafle/homelab-monitoring.git
+cd homelab-monitoring
 ./scripts/install.sh
 ```
 

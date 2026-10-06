@@ -73,7 +73,7 @@ First release. Monitors the Linux machine it's installed on.
 - The power source panel works on any laptop, whatever the charger is called.
 - Disk model and serial number labels from the host's udev data.
 
-[Unreleased]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/santosh-kafle/prometheus-grafana-monitoring/releases/tag/v0.1.0
+[Unreleased]: https://github.com/santosh-kafle/homelab-monitoring/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/santosh-kafle/homelab-monitoring/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/santosh-kafle/homelab-monitoring/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/santosh-kafle/homelab-monitoring/releases/tag/v0.1.0

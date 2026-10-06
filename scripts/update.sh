@@ -47,7 +47,7 @@ main() {
   # downloaded as a zip from github instead of git clone -> no history to update from
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
     die "this folder isnt a git clone, so it cant update itself. clone it with git instead:
-         https://github.com/santosh-kafle/prometheus-grafana-monitoring"
+         https://github.com/santosh-kafle/homelab-monitoring"
 
   # the checkout would overwrite any changes made to files that came from git.
   # .env isnt one of them (its gitignored), so its always safe
