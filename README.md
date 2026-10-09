@@ -8,11 +8,17 @@ battery, on a ready-made dashboard. Built with Prometheus and Grafana, the same 
 to monitor production servers, and set up so a beginner can install it with one command
 and understand how every piece works.
 
-![Dashboard overview](docs/images/dashboard.png)
+![Overview and per-container CPU, memory, network and disk](docs/images/dashboard.png)
 
-Further down the same dashboard: network, battery, temperatures and resource pressure.
+The top of the dashboard: the machine at a glance, then every Docker container side by side.
 
-![Hardware and pressure panels](docs/images/hardware.png)
+![CPU and memory panels](docs/images/cpu-memory.png)
+
+CPU by mode, per core, frequency and load, then where your memory goes.
+
+![Network and hardware panels](docs/images/hardware.png)
+
+Network traffic and errors, battery, power source and every temperature sensor.
 
 ## What you get
 
